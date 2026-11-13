@@ -6,7 +6,7 @@ export type Element = DisplayDrawParams["elements"][number];
 
 /** Front display of the app. */
 export interface Screen {
-  /** Draws a whole frame; elements of the previous frame that are not in it are cleared. */
+  /** Draws a whole frame: only its elements that changed since the last frame are sent, those not in it are cleared. */
   show(elements: Element[]): void;
   /** Stops drawing: frames asked for after this are dropped. */
   close(): void;
@@ -17,7 +17,8 @@ export interface Screen {
  * replaces it.
  */
 export function createScreen(app: string, report: (err: unknown) => void): Screen {
-  let shown: string[] = [];
+  /** What is on the displays now: element id → its description as sent. */
+  let shown = new Map<string, string>();
   let next: Element[] | null = null;
   let busy = false;
   let closed = false;
@@ -28,14 +29,15 @@ export function createScreen(app: string, report: (err: unknown) => void): Scree
       const elements = next;
       next = null;
       const ids = elements.map((e) => e.id);
-      const gone = shown.filter((id) => ids.indexOf(id) < 0);
+      const gone = [...shown.keys()].filter((id) => ids.indexOf(id) < 0);
+      const changed = elements.filter((e) => shown.get(e.id) !== JSON.stringify(e));
       try {
         if (gone.length > 0) {
           await device.DisplayClear({ application_name: app, element_ids: gone });
-          shown = shown.filter((id) => ids.indexOf(id) >= 0);
+          for (const id of gone) shown.delete(id);
         }
-        await device.DisplayDraw({ application_name: app, priority: 50, elements });
-        shown = ids;
+        if (changed.length > 0) await device.DisplayDraw({ application_name: app, priority: 50, elements: changed });
+        shown = new Map(elements.map((e): [string, string] => [e.id, JSON.stringify(e)]));
       } catch (err) {
         report(err);
       }
