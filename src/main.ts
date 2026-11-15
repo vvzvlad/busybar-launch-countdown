@@ -191,8 +191,9 @@ function main(): void {
     console.error(`${APP}: ${err instanceof Error ? err.message : String(err)}`);
   const screen = createScreen(APP, report);
 
-  // Under a day the countdown is redrawn on every second, the "3D 07H" text on the hour. When the launch shown
-  // reaches T-0 its rocket lifts off, and the launch leaves the list.
+  // Under a day the countdown is redrawn just after every second, the "3D 07H" text on the hour. A launch shown at
+  // T-0 or past it lifts off and leaves the list: on the second it gets there, or when the wheel comes back to one
+  // that got there while another was shown.
   let ticker: ReturnType<typeof setTimeout> | undefined;
   let liftoff: ReturnType<typeof setTimeout> | undefined;
   const redraw = () => {
@@ -201,18 +202,14 @@ function main(): void {
     ticker = undefined;
     liftoff = undefined;
     const launch = launches[index];
+    if (launch && secondsLeft(launch) <= 0) {
+      lift(0);
+      return;
+    }
     screen.show(frame(launches, index, null));
     const left = launch ? secondsLeft(launch) : 0;
     if (left >= DAY_S) ticker = setTimeout(redraw, ((left % HOUR_S) + 1) * 1000);
-    else if (left > 0) ticker = setTimeout(tick, 1000 - (Date.now() % 1000) + 20);
-  };
-
-  /** Just after the next second: the countdown is redrawn, or at T-0 the liftoff begins. */
-  const tick = () => {
-    ticker = undefined;
-    const launch = launches[index];
-    if (launch && secondsLeft(launch) <= 0) lift(0);
-    else redraw();
+    else if (left > 0) ticker = setTimeout(redraw, 1000 - (Date.now() % 1000) + 20);
   };
 
   /** One frame of the liftoff; after the last the launch leaves the list and the next one is shown. */
@@ -233,7 +230,9 @@ function main(): void {
     if (loading) return;
     loading = true;
     try {
-      launches = await load();
+      // A launch already past T-0 when it arrives (the list keeps them until confirmed) is dropped: it would sit at
+      // 00:00:00, or lift off minutes after its time.
+      launches = (await load()).filter((launch) => secondsLeft(launch) > 0);
     } catch (err) {
       launches = [];
       report(err);
@@ -250,7 +249,7 @@ function main(): void {
   const unbind = listen("input", (event) => {
     if (stopped) return;
 
-    // The wheel steps through the five launches.
+    // The wheel steps through the launches, up to five.
     if (event.key === "encoder") {
       if (launches.length === 0) return;
       index = (index + event.delta + launches.length) % launches.length;
