@@ -10,7 +10,8 @@ A JavaScript app for [BUSY Bar](https://busy.app). Work in progress.
 - The back display shows the mission name, its status, the launch date and time on the BUSY Bar's clock, and which of the upcoming launches it is, such as `1/5`.
 - The color follows the launch status: Go, TBC, TBD or Hold.
 - The wheel steps through the upcoming launches, up to five.
-- At T-0 the rocket lifts off the pad on its flame and flies off the top, and the next launch takes its place.
+- At T-0 the rocket lifts off the pad on its flame with a roar and flies off the top, and the next launch takes its place.
+- Without a connection it keeps counting down to the launches it last got, dimmed, with a red cross in the corner.
 
 ## Data
 
