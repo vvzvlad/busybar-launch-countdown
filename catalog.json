@@ -1,0 +1,6 @@
+{
+  "category": "info-feeds",
+  "short_description": "A countdown to the next rocket launch, with a rocket waiting on its pad.",
+  "description": "## What you see\n\n- On the front: a rocket on its pad and the time to liftoff in large digits, such as 02:13:44, or 3D 07H when it is days away. The color follows the launch status: green for Go, yellow for TBC or TBD, red for Hold.\n- At T-0 the rocket lifts off, and the next launch takes its place.\n- On the back display: the mission name, its status, the launch time and which of the upcoming launches it is.\n\n## How to use\n\nTurn the wheel to step through the upcoming launches, up to five.\n\n## Data\n\n[The Space Devs Launch Library 2](https://thespacedevs.com/llapi), no key needed, checked every 15 minutes.",
+  "changelog": "First release: up to five upcoming launches, a rocket that lifts off at T-0, details on the back display."
+}
